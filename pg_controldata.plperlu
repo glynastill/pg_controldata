@@ -17,7 +17,7 @@ $BODY$
     my $rv;
     my $data_dir;
     my $pg_controldata_bin = 'pg_controldata';
-	my @fields;
+    my @fields;
     
     $rv = spi_exec_query('SHOW data_directory', 1);
     $data_dir = $rv->{rows}[0]->{data_directory};
@@ -25,15 +25,14 @@ $BODY$
     open(FD,"$pg_controldata_bin $data_dir | ");
     
     while(<FD>) {
-		@fields = split(':', $_, 2);
-		$fields[0] =~ s/^\s+|\s+$//g;
-		$fields[1] =~ s/^\s+|\s+$//g;
-		return_next { name => $fields[0], setting => $fields[1]};
+        @fields = split(':', $_, 2);
+        $fields[0] =~ s/^\s+|\s+$//g;
+        $fields[1] =~ s/^\s+|\s+$//g;
+        return_next { name => $fields[0], setting => $fields[1]};
     }
     close (FD);
     
     return;    
-
 $BODY$
 LANGUAGE plperlu;
 
