@@ -1,0 +1,45 @@
+--
+-- Glyn Astill 08/02/2014
+-- Pl/perlU function/view to show settings from pg_controldata
+--
+-- For an extension in written in C by Joe Conway see:
+--     https://github.com/jconway/pg_controldata
+--
+
+SET search_path = public;
+
+--
+
+DROP FUNCTION IF EXISTS pg_controldata();
+CREATE OR REPLACE FUNCTION pg_controldata() 
+RETURNS TABLE (name text, setting text) AS 
+$BODY$
+    my $rv;
+    my $data_dir;
+    my $pg_controldata_bin = 'pg_controldata';
+	my @fields;
+    
+    $rv = spi_exec_query('SHOW data_directory', 1);
+    $data_dir = $rv->{rows}[0]->{data_directory};
+    
+    open(FD,"$pg_controldata_bin $data_dir | ");
+    
+    while(<FD>) {
+		@fields = split(':', $_, 2);
+		$fields[0] =~ s/^\s+|\s+$//g;
+		$fields[1] =~ s/^\s+|\s+$//g;
+		return_next { name => $fields[0], setting => $fields[1]};
+    }
+    close (FD);
+    
+    return;    
+
+$BODY$
+LANGUAGE plperlu;
+
+--
+
+CREATE VIEW pg_controldata AS
+SELECT * FROM pg_controldata();
+
+GRANT SELECT ON pg_controldata TO PUBLIC;
